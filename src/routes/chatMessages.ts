@@ -37,8 +37,8 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
 
       const result = await pool.query(
         `INSERT INTO chat_messages (sender_id, receiver_id, encrypted_content, iv, auth_tag, message_type)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, sender_id, receiver_id, created_at, read_status, message_type`, // Non-sensitive fields
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id, sender_id, receiver_id, created_at, read_status, message_type`, // Non-sensitive fields
         [
           senderId,
           receiverId,
@@ -48,7 +48,7 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
           messageType,
         ]
       )
-      const newMessage = result.rows[0] // Capture the returned new message
+      const newMessage = result.rows[0]
 
       // Trigger Pusher event after successful message storage
       const sanitizedReceiverId = receiverId
@@ -61,14 +61,10 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
 
       const eventName = 'new-message'
 
+      // Trigger a notification event telling the user there's a new message
       pusherInstance.trigger(channelName, eventName, {
-        id: newMessage.id,
-        senderId: newMessage.sender_id,
-        receiverId: newMessage.receiver_id,
-        content: content, // Send the decrypted content via Pusher
-        messageType: newMessage.message_type,
-        createdAt: newMessage.created_at,
-        readStatus: newMessage.read_status,
+        message: `A new message has been posted in your chat.`,
+        timestamp: new Date().toISOString(),
       })
       console.log(
         `Pusher event triggered on channel '${channelName}' for message ID: ${newMessage.id}`
@@ -91,16 +87,16 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
     }
 
     let query = `SELECT id, sender_id, receiver_id, encrypted_content, iv, auth_tag, created_at, read_status, message_type
-               FROM chat_messages
-               WHERE sender_id = $1 OR receiver_id = $1
-               ORDER BY created_at ASC` // Chat history ordered by time
+                 FROM chat_messages
+                 WHERE sender_id = $1 OR receiver_id = $1
+                 ORDER BY created_at ASC` // Chat history ordered by time
     const values: (string | number)[] = [userId]
 
     if (participantId) {
       query = `SELECT id, sender_id, receiver_id, encrypted_content, iv, auth_tag, created_at, read_status, message_type
-             FROM chat_messages
-             WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
-             ORDER BY created_at ASC`
+               FROM chat_messages
+               WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+               ORDER BY created_at ASC`
       values.push(participantId as string)
     }
 

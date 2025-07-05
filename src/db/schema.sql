@@ -22,5 +22,4 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_chat_messages_sender_id ON chat_messages (sender_id);
-CREATE INDEX IF NOT EXISTS idx_chat_messages_receiver_id ON chat_messages (receiver_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages (sender_id, receiver_id);
