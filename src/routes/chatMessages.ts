@@ -2,8 +2,18 @@ import express from 'express'
 import { auth, AuthResult } from 'express-oauth2-jwt-bearer'
 import pool from '../db/connection'
 import { encrypt, decrypt } from '../utils/encryption'
+import Pusher from 'pusher'
 
 const router = express.Router()
+
+// Pusher init
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.PUSHER_CLUSTER || '',
+  useTLS: true, // Ensures encrypted connection
+})
 
 // JWT middleware
 const jwtCheck = auth({
@@ -29,7 +39,6 @@ router.post('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     return res.status(400).json({ message: 'Message content is required.' })
   }
 
-  // Validation for receiverId
   try {
     // Encrypt the message
     const { iv, encryptedText, tag } = encrypt(content)
@@ -40,7 +49,28 @@ router.post('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
        RETURNING id, sender_id, receiver_id, created_at, read_status, message_type`, // Non-sensitive fields
       [senderId, receiverId, encryptedText, iv, tag, messageType]
     )
-    res.status(201).json(result.rows[0]) // Return the new message's info
+    const newMessage = result.rows[0] // Capture the returned new message
+
+    // Trigger Pusher event after successful message storage
+    const channelName = receiverId
+      ? `private-chat-${receiverId}`
+      : 'public-chat'
+    const eventName = 'new-message'
+
+    pusher.trigger(channelName, eventName, {
+      id: newMessage.id,
+      senderId: newMessage.sender_id,
+      receiverId: newMessage.receiver_id,
+      content: content, // Send the decrypted content via Pusher
+      messageType: newMessage.message_type,
+      createdAt: newMessage.created_at,
+      readStatus: newMessage.read_status,
+    })
+    console.log(
+      `Pusher event triggered on channel '${channelName}' for message ID: ${newMessage.id}`
+    )
+
+    res.status(201).json(newMessage) // Return the new message
   } catch (err) {
     console.error('Error sending chat message:', err)
     res.status(500).json({ message: 'Failed to send chat message.' })
