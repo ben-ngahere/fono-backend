@@ -21,11 +21,13 @@
   "homepage": "https://github.com/ben-ngahere/fono-backend#readme",
   "description": "",
   "dependencies": {
+    "@types/pg": "^8.15.4",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
     "express-oauth2-jwt-bearer": "^1.6.1",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

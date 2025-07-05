@@ -2,6 +2,8 @@ import express, { ErrorRequestHandler } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { auth, UnauthorizedError } from 'express-oauth2-jwt-bearer'
+import pool from './db/connection'
+
 dotenv.config()
 
 const app = express()
@@ -46,6 +48,17 @@ app.use(function errorHandler(
   }
   next(err)
 } as ErrorRequestHandler)
+
+// Test db connection before starting server
+pool
+  .connect()
+  .then((client) => {
+    console.log('Connected to PostgreSQL database!')
+    client.release()
+  })
+  .catch((err) => {
+    console.error('Error connecting to PostgreSQL database:', err.message)
+  })
 
 app.listen(port, () => {
   console.log(`Fono Backend listening on port ${port}`)
