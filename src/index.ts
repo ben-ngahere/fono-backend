@@ -6,19 +6,30 @@ import pool from './db/connection'
 import * as fs from 'fs'
 import * as path from 'path'
 import fonoItemsRouter from './routes/fonoItems'
-import chatMessagesRouter from './routes/chatMessages'
+import createChatMessagesRouter from './routes/chatMessages'
+import Pusher from 'pusher'
 
 dotenv.config()
 
+// Pusher init
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID as string,
+  key: process.env.PUSHER_KEY as string,
+  secret: process.env.PUSHER_SECRET as string,
+  cluster: process.env.PUSHER_CLUSTER as string,
+  useTLS: true,
+})
+
 const app = express()
 const port = process.env.PORT || 3000
+app.use(express.urlencoded({ extended: true }))
 
 app.use(cors())
 app.use(express.json())
 
 // Routes
 app.use('/v1/fono_items', fonoItemsRouter)
-app.use('/v1/chat_messages', chatMessagesRouter)
+app.use('/v1/chat_messages', createChatMessagesRouter(pusher))
 
 // Root route (server check)
 app.get('/', (req, res) => {
@@ -41,6 +52,30 @@ const jwtCheck = auth({
 app.get('/v1/protected', jwtCheck, (req, res) => {
   console.log('Protected route accessed by authenticated user!')
   res.json({ message: 'This is protected data from the backend!' })
+})
+
+// Pusher Auth endpoint
+app.post('/v1/pusher/auth', jwtCheck, (req, res) => {
+  const socketId = req.body.socket_id
+  const channelName = req.body.channel_name
+  const userId = req.auth?.payload.sub // Get users ID from Auth0 token
+
+  if (channelName.startsWith('private-') && userId) {
+    const sanitizedUserId = userId.replace(/\|/g, '_').replace(/\./g, '-')
+    const expectedChannelNameSuffix = `chat-${sanitizedUserId}`
+
+    const sanitizedChannelName = channelName
+      .replace(/\|/g, '_')
+      .replace(/\./g, '-')
+
+    const auth = pusher.authorizeChannel(socketId, sanitizedChannelName, {
+      user_id: userId,
+    })
+    res.send(auth)
+  } else {
+    // If not a private channel or user not authenticated, deny access
+    res.status(403).send('Forbidden')
+  }
 })
 
 // Connect to DB + Initialise DB Schema

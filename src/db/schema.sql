@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     receiver_id VARCHAR(255),           
                               
     encrypted_content TEXT NOT NULL,   
-    iv TEXT NOT NULL,                   
-    auth_tag TEXT NOT NULL,
+    iv BYTEA NOT NULL,                   
+    auth_tag BYTEA NOT NULL,
     read_status BOOLEAN DEFAULT FALSE,
     message_type VARCHAR(50) DEFAULT 'text',             
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
