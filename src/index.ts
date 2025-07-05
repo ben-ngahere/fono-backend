@@ -8,6 +8,7 @@ import * as path from 'path'
 import fonoItemsRouter from './routes/fonoItems'
 import createChatMessagesRouter from './routes/chatMessages'
 import Pusher from 'pusher'
+import createPusherAuthRouter from './routes/pusherAuth'
 
 dotenv.config()
 
@@ -30,6 +31,7 @@ app.use(express.json())
 // Routes
 app.use('/v1/fono_items', fonoItemsRouter)
 app.use('/v1/chat_messages', createChatMessagesRouter(pusher))
+app.use('/v1/pusher', createPusherAuthRouter(pusher))
 
 // Root route (server check)
 app.get('/', (req, res) => {
@@ -41,7 +43,7 @@ app.get('/v1/greeting', (req, res) => {
   res.json({ greeting: 'Backend says hello from a public endpoint!' })
 })
 
-// JWT middleware
+// JWT middleware for other protected routes
 const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
   issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
@@ -54,31 +56,7 @@ app.get('/v1/protected', jwtCheck, (req, res) => {
   res.json({ message: 'This is protected data from the backend!' })
 })
 
-// Pusher Auth endpoint
-app.post('/v1/pusher/auth', jwtCheck, (req, res) => {
-  const socketId = req.body.socket_id
-  const channelName = req.body.channel_name
-  const userId = req.auth?.payload.sub // Get users ID from Auth0 token
-
-  if (channelName.startsWith('private-') && userId) {
-    const sanitizedUserId = userId.replace(/\|/g, '_').replace(/\./g, '-')
-    const expectedChannelNameSuffix = `chat-${sanitizedUserId}`
-
-    const sanitizedChannelName = channelName
-      .replace(/\|/g, '_')
-      .replace(/\./g, '-')
-
-    const auth = pusher.authorizeChannel(socketId, sanitizedChannelName, {
-      user_id: userId,
-    })
-    res.send(auth)
-  } else {
-    // If not a private channel or user not authenticated, deny access
-    res.status(403).send('Forbidden')
-  }
-})
-
-// Connect to DB + Initialise DB Schema
+// DB init
 async function initializeDatabase() {
   try {
     await pool.connect()
@@ -94,7 +72,7 @@ async function initializeDatabase() {
   }
 }
 
-// Error handling middleware
+// Error handling
 app.use(((err, req, res, next) => {
   if (err instanceof UnauthorizedError) {
     console.error('Unauthorized Error:', err.message)
@@ -103,13 +81,12 @@ app.use(((err, req, res, next) => {
   next(err)
 }) as ErrorRequestHandler)
 
-// Error handling general
 app.use(((err, req, res, next) => {
   console.error(err)
   res.status(500).json({ message: 'Internal Server Error' })
 }) as ErrorRequestHandler)
 
-// Initialise DB before listening
+// Start server
 initializeDatabase()
   .then(() => {
     app.listen(port, () => {
