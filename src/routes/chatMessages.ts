@@ -15,6 +15,13 @@ const pusher = new Pusher({
   useTLS: true, // Ensures encrypted connection
 })
 
+// Feedback to see Pusher is connected when Backend spins up
+console.log('Pusher Init Params:')
+console.log('  App ID:', process.env.PUSHER_APP_ID)
+console.log('  Key:', process.env.PUSHER_KEY)
+console.log('  Secret:', process.env.PUSHER_SECRET ? '******' : 'MISSING')
+console.log('  Cluster:', process.env.PUSHER_CLUSTER)
+
 // JWT middleware
 const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
