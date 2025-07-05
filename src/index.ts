@@ -5,6 +5,7 @@ import { auth, UnauthorizedError } from 'express-oauth2-jwt-bearer'
 import pool from './db/connection'
 import * as fs from 'fs'
 import * as path from 'path'
+import fonoItemsRouter from './routes/fonoItems'
 
 dotenv.config()
 
@@ -13,6 +14,9 @@ const port = process.env.PORT || 3000
 
 app.use(cors())
 app.use(express.json())
+
+// fono_items route
+app.use('/v1/fono_items', fonoItemsRouter)
 
 // Root route (server check)
 app.get('/', (req, res) => {
