@@ -3,6 +3,8 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { auth, UnauthorizedError } from 'express-oauth2-jwt-bearer'
 import pool from './db/connection'
+import * as fs from 'fs'
+import * as path from 'path'
 
 dotenv.config()
 
@@ -54,10 +56,28 @@ pool
   .connect()
   .then((client) => {
     console.log('Connected to PostgreSQL database!')
-    client.release()
+
+    const schemaPath = path.join(__dirname, 'db', 'schema.sql')
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8')
+
+    return client
+      .query(schemaSql)
+      .then(() => {
+        console.log(
+          'fono_items table schema applied successfully (or already exists)'
+        )
+        client.release()
+      })
+      .catch((schemaErr) => {
+        client.release()
+        console.error(
+          'Error applying fono_items table schema:',
+          schemaErr.message
+        )
+      })
   })
-  .catch((err) => {
-    console.error('Error connecting to PostgreSQL database:', err.message)
+  .catch((connErr) => {
+    console.error('Error connecting to PostgreSQL database:', connErr.message)
   })
 
 app.listen(port, () => {
