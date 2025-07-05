@@ -6,6 +6,7 @@ import pool from './db/connection'
 import * as fs from 'fs'
 import * as path from 'path'
 import fonoItemsRouter from './routes/fonoItems'
+import chatMessagesRouter from './routes/chatMessages'
 
 dotenv.config()
 
@@ -15,8 +16,9 @@ const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
-// fono_items route
+// Routes
 app.use('/v1/fono_items', fonoItemsRouter)
+app.use('/v1/chat_messages', chatMessagesRouter)
 
 // Root route (server check)
 app.get('/', (req, res) => {
@@ -41,49 +43,48 @@ app.get('/v1/protected', jwtCheck, (req, res) => {
   res.json({ message: 'This is protected data from the backend!' })
 })
 
+// Connect to DB + Initialise DB Schema
+async function initializeDatabase() {
+  try {
+    await pool.connect()
+    console.log('Connected to PostgreSQL database!')
+
+    const schemaPath = path.join(__dirname, 'db', 'schema.sql')
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8')
+    await pool.query(schemaSql)
+    console.log('Database schema applied successfully (or already exists)')
+  } catch (err) {
+    console.error('Error initializing database:', err)
+    process.exit(1)
+  }
+}
+
 // Error handling middleware
-app.use(function errorHandler(
-  err: any,
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
+app.use(((err, req, res, next) => {
   if (err instanceof UnauthorizedError) {
     console.error('Unauthorized Error:', err.message)
     return res.status(err.status).json({ message: err.message })
   }
   next(err)
-} as ErrorRequestHandler)
+}) as ErrorRequestHandler)
 
-// Test db connection before starting server
-pool
-  .connect()
-  .then((client) => {
-    console.log('Connected to PostgreSQL database!')
+// Error handling general
+app.use(((err, req, res, next) => {
+  console.error(err)
+  res.status(500).json({ message: 'Internal Server Error' })
+}) as ErrorRequestHandler)
 
-    const schemaPath = path.join(__dirname, 'db', 'schema.sql')
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8')
-
-    return client
-      .query(schemaSql)
-      .then(() => {
-        console.log(
-          'fono_items table schema applied successfully (or already exists)'
-        )
-        client.release()
-      })
-      .catch((schemaErr) => {
-        client.release()
-        console.error(
-          'Error applying fono_items table schema:',
-          schemaErr.message
-        )
-      })
+// Initialise DB before listening
+initializeDatabase()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Fono Backend listening on port ${port}`)
+    })
   })
-  .catch((connErr) => {
-    console.error('Error connecting to PostgreSQL database:', connErr.message)
+  .catch((err) => {
+    console.error(
+      'Failed to start server due to database initialization error:',
+      err
+    )
+    process.exit(1)
   })
-
-app.listen(port, () => {
-  console.log(`Fono Backend listening on port ${port}`)
-})
