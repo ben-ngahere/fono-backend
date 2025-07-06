@@ -61,6 +61,16 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
 
       const eventName = 'new-message'
 
+      // -- Testing -- //
+      console.log(
+        `Sending Pusher event to channel: ${channelName} with event: ${eventName}`
+      )
+      pusherInstance.trigger(channelName, eventName, {
+        message: `A new message has been posted in your chat.`,
+        timestamp: new Date().toISOString(),
+      })
+      // -- Testing -- //
+
       // Trigger a notification event telling the user there's a new message
       pusherInstance.trigger(channelName, eventName, {
         message: `A new message has been posted in your chat.`,

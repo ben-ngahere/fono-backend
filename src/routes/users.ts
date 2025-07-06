@@ -31,6 +31,51 @@ router.get('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   }
 }) as express.RequestHandler)
 
+// Create current user profile (/v1/users/me)
+router.get('/me', jwtCheck, (async (req: AuthenticatedRequest, res) => {
+  const userId = req.auth?.payload.sub
+  const userEmail = req.auth?.payload.email as string
+
+  if (!userId) {
+    return res.status(401).json({ message: 'User not authenticated' })
+  }
+
+  try {
+    // Try to get existing profile
+    let result = await pool.query(
+      `SELECT user_id, email, display_name, avatar_url, status, status_message, last_seen
+       FROM user_profiles
+       WHERE user_id = $1`,
+      [userId]
+    )
+
+    // If no profile exists, create one
+    if (result.rows.length === 0) {
+      // Create a unique email if none provided
+      const email = userEmail || `${userId.replace(/[|.]/g, '-')}@fono.local`
+
+      // Extract a display name
+      const emailName = email.split('@')[0]
+      const displayName =
+        (req.auth?.payload.name as string) ||
+        (req.auth?.payload.nickname as string) ||
+        emailName
+
+      result = await pool.query(
+        `INSERT INTO user_profiles (user_id, email, display_name, avatar_url)
+         VALUES ($1, $2, $3, $4)
+         RETURNING user_id, email, display_name, avatar_url, status, status_message, last_seen`,
+        [userId, email, displayName, req.auth?.payload.picture || null]
+      )
+    }
+
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('Error fetching/creating user profile:', error)
+    res.status(500).json({ message: 'Failed to fetch user profile' })
+  }
+}) as express.RequestHandler)
+
 // GET specific user (/v1/users/:userId)
 router.get('/:userId', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const { userId } = req.params
@@ -51,51 +96,6 @@ router.get('/:userId', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     console.error('Error fetching user:', error)
     res.status(500).json({ message: 'Failed to fetch user' })
-  }
-}) as express.RequestHandler)
-
-// Create current user profile (/v1/users/me)
-router.get('/me', jwtCheck, (async (req: AuthenticatedRequest, res) => {
-  const userId = req.auth?.payload.sub
-  const userEmail =
-    (req.auth?.payload.email as string) ||
-    (req.auth?.payload.name as string) ||
-    'user@fono.local'
-
-  if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated' })
-  }
-
-  try {
-    // Try to get existing profile
-    let result = await pool.query(
-      `SELECT user_id, email, display_name, avatar_url, status, status_message, last_seen
-       FROM user_profiles
-       WHERE user_id = $1`,
-      [userId]
-    )
-
-    // If no profile exists, create one
-    if (result.rows.length === 0) {
-      // Get a display name from the email or auth0 profile
-      const emailName = userEmail.split('@')[0]
-      const displayName =
-        (req.auth?.payload.name as string) ||
-        (req.auth?.payload.nickname as string) ||
-        emailName
-
-      result = await pool.query(
-        `INSERT INTO user_profiles (user_id, email, display_name, avatar_url)
-         VALUES ($1, $2, $3, $4)
-         RETURNING user_id, email, display_name, avatar_url, status, status_message, last_seen`,
-        [userId, userEmail, displayName, req.auth?.payload.picture || null]
-      )
-    }
-
-    res.json(result.rows[0])
-  } catch (error) {
-    console.error('Error fetching/creating user profile:', error)
-    res.status(500).json({ message: 'Failed to fetch user profile' })
   }
 }) as express.RequestHandler)
 
