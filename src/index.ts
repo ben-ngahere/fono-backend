@@ -9,6 +9,7 @@ import fonoItemsRouter from './routes/fonoItems'
 import createChatMessagesRouter from './routes/chatMessages'
 import Pusher from 'pusher'
 import createPusherAuthRouter from './routes/pusherAuth'
+import usersRouter from './routes/users'
 
 dotenv.config()
 
@@ -32,6 +33,7 @@ app.use(express.json())
 app.use('/v1/fono_items', fonoItemsRouter)
 app.use('/v1/chat_messages', createChatMessagesRouter(pusher))
 app.use('/v1/pusher', createPusherAuthRouter(pusher))
+app.use('/v1/users', usersRouter)
 
 // Root route (server check)
 app.get('/', (req, res) => {
