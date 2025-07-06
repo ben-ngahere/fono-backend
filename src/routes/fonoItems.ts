@@ -21,7 +21,7 @@ router.get('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const userId = req.auth?.payload.sub
 
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated.' })
+    return res.status(401).json({ message: 'User not authenticated' })
   }
 
   try {
@@ -32,7 +32,7 @@ router.get('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     res.json(result.rows)
   } catch (err) {
     console.error('Error fetching fono_items:', err)
-    res.status(500).json({ message: 'Failed to fetch fono items.' })
+    res.status(500).json({ message: 'Failed to fetch fono items' })
   }
 }) as express.RequestHandler)
 
@@ -42,10 +42,10 @@ router.post('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const { title, description } = req.body
 
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated.' })
+    return res.status(401).json({ message: 'User not authenticated' })
   }
   if (!title) {
-    return res.status(400).json({ message: 'Title is required.' })
+    return res.status(400).json({ message: 'Title is required' })
   }
 
   try {
@@ -56,7 +56,7 @@ router.post('/', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error('Error creating fono_item:', err)
-    res.status(500).json({ message: 'Failed to create fono item.' })
+    res.status(500).json({ message: 'Failed to create fono item' })
   }
 }) as express.RequestHandler)
 
@@ -66,7 +66,7 @@ router.get('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const { id } = req.params
 
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated.' })
+    return res.status(401).json({ message: 'User not authenticated' })
   }
 
   try {
@@ -77,7 +77,7 @@ router.get('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: 'Fono item not found or not authorized.' })
+        .json({ message: 'Fono item not found or not authorised' })
     }
     res.json(result.rows[0])
   } catch (err) {
@@ -93,10 +93,10 @@ router.put('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const { title, description } = req.body
 
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated.' })
+    return res.status(401).json({ message: 'User not authenticated' })
   }
   if (title === undefined && description === undefined) {
-    return res.status(400).json({ message: 'No fields to update provided.' })
+    return res.status(400).json({ message: 'No fields to update provided' })
   }
 
   try {
@@ -127,12 +127,12 @@ router.put('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: 'Fono item not found or not authorized.' })
+        .json({ message: 'Fono item not found or not authorised' })
     }
     res.json(result.rows[0])
   } catch (err) {
     console.error('Error updating fono_item:', err)
-    res.status(500).json({ message: 'Failed to update fono item.' })
+    res.status(500).json({ message: 'Failed to update fono item' })
   }
 }) as express.RequestHandler)
 
@@ -142,7 +142,7 @@ router.delete('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
   const { id } = req.params
 
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated.' })
+    return res.status(401).json({ message: 'User not authenticated' })
   }
 
   try {
@@ -153,12 +153,12 @@ router.delete('/:id', jwtCheck, (async (req: AuthenticatedRequest, res) => {
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: 'Fono item not found or not authorized.' })
+        .json({ message: 'Fono item not found or not authorized' })
     }
     res.status(204).send()
   } catch (err) {
     console.error('Error deleting fono_item:', err)
-    res.status(500).json({ message: 'Failed to delete fono item.' })
+    res.status(500).json({ message: 'Failed to delete fono item' })
   }
 }) as express.RequestHandler)
 

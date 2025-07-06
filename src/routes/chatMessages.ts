@@ -25,10 +25,10 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
     const { receiverId, content, messageType = 'text' } = req.body
 
     if (!senderId) {
-      return res.status(401).json({ message: 'Sender not authenticated.' })
+      return res.status(401).json({ message: 'Sender not authenticated' })
     }
     if (!content) {
-      return res.status(400).json({ message: 'Message content is required.' })
+      return res.status(400).json({ message: 'Message content is required' })
     }
 
     try {
@@ -66,14 +66,14 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
         `Sending Pusher event to channel: ${channelName} with event: ${eventName}`
       )
       pusherInstance.trigger(channelName, eventName, {
-        message: `A new message has been posted in your chat.`,
+        message: `A new message has been posted in your chat`,
         timestamp: new Date().toISOString(),
       })
       // -- Testing -- //
 
       // Trigger a notification event telling the user there's a new message
       pusherInstance.trigger(channelName, eventName, {
-        message: `A new message has been posted in your chat.`,
+        message: `A new message has been posted in your chat`,
         timestamp: new Date().toISOString(),
       })
       console.log(
@@ -83,7 +83,7 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
       res.status(201).json(newMessage) // Return the new message
     } catch (err) {
       console.error('Error sending chat message:', err)
-      res.status(500).json({ message: 'Failed to send chat message.' })
+      res.status(500).json({ message: 'Failed to send chat message' })
     }
   }) as express.RequestHandler)
 
@@ -93,7 +93,7 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
     const { participantId } = req.query
 
     if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated.' })
+      return res.status(401).json({ message: 'User not authenticated' })
     }
 
     let query = `SELECT id, sender_id, receiver_id, encrypted_content, iv, auth_tag, created_at, read_status, message_type
@@ -140,8 +140,8 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
 
       res.json(decryptedMessages)
     } catch (err) {
-      console.error('Error fetching chat messages:', err)
-      res.status(500).json({ message: 'Failed to fetch chat messages.' })
+      console.error('Error getting chat messages:', err)
+      res.status(500).json({ message: 'Failed to get chat messages' })
     }
   }) as express.RequestHandler)
 
