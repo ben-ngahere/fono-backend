@@ -145,5 +145,47 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
     }
   }) as express.RequestHandler)
 
+  // DELETE a message (/v1/chat_messages/:messageId)
+  router.delete('/:messageId', jwtCheck, (async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
+    const userId = req.auth?.payload.sub
+    const { messageId } = req.params
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated.' })
+    }
+
+    try {
+      // First check if the user owns this message
+      const checkResult = await pool.query(
+        'SELECT sender_id FROM chat_messages WHERE id = $1',
+        [messageId]
+      )
+
+      if (checkResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Message not found.' })
+      }
+
+      if (checkResult.rows[0].sender_id !== userId) {
+        return res
+          .status(403)
+          .json({ message: 'You can only delete your own messages.' })
+      }
+
+      // Soft delete by setting is_deleted flag
+      await pool.query(
+        'UPDATE chat_messages SET is_deleted = true WHERE id = $1',
+        [messageId]
+      )
+
+      res.status(200).json({ message: 'Message deleted successfully.' })
+    } catch (err) {
+      console.error('Error deleting message:', err)
+      res.status(500).json({ message: 'Failed to delete message.' })
+    }
+  }) as express.RequestHandler)
+
   return router
 }
