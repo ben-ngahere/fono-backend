@@ -23,4 +23,6 @@ logs/
 .eslintcache
 .vscode/
 .idea/
-*.tgz
+*.tgzdocker-compose.yml
+.envs
+*.env

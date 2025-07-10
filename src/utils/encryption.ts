@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 
+// Encryption key from .env (hardcoded for Docker)
 // Encryption key from .env
 const ENCRYPTION_KEY_HEX = process.env.ENCRYPTION_KEY
 
