@@ -13,16 +13,19 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     id SERIAL PRIMARY KEY,
     sender_id VARCHAR(255) NOT NULL,    
     receiver_id VARCHAR(255),           
-                              
     encrypted_content TEXT NOT NULL,   
     iv BYTEA NOT NULL,                   
     auth_tag BYTEA NOT NULL,
     read_status BOOLEAN DEFAULT FALSE,
-    message_type VARCHAR(50) DEFAULT 'text',             
+    message_type VARCHAR(50) DEFAULT 'text',
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages (sender_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_is_deleted ON chat_messages (is_deleted);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_active ON chat_messages (sender_id, receiver_id, is_deleted);
 
 CREATE TABLE IF NOT EXISTS user_profiles (
     user_id VARCHAR(255) PRIMARY KEY,
