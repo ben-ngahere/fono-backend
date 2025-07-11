@@ -97,7 +97,7 @@ initializeDatabase()
   })
   .catch((err) => {
     console.error(
-      'Failed to start server due to database initialization error:',
+      'Failed to start server due to database initialisation error:',
       err
     )
     process.exit(1)
