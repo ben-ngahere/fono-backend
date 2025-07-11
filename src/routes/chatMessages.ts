@@ -129,6 +129,8 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
           const { encrypted_content, iv, auth_tag, ...rest } = row
           return {
             ...rest,
+            senderId: row.sender_id,
+            receiverId: row.receiver_id,
             content: decryptedContent,
           }
         } catch (decryptError) {
@@ -136,6 +138,8 @@ export default function createChatMessagesRouter(pusherInstance: Pusher) {
           const { encrypted_content, iv, auth_tag, ...rest } = row
           return {
             ...rest,
+            senderId: row.sender_id,
+            receiverId: row.receiver_id,
             content: '[Could not decrypt message]',
             decryptionError: true,
           }
