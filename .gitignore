@@ -26,3 +26,4 @@ logs/
 *.docker-compose.yml
 .envs
 *.env
+docker-compose.yml
