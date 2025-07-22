@@ -4,7 +4,7 @@
 > 
 > **Work in progress** - actively adding features and improving security!
 
-This is the backend that powers FONO - handles message encryption, user authentication, real-time events, and all the server-side logic that keeps family conversations secure and private.
+This is the backend that powers FONO - handles message encryption, user authentication, real-time events and all the server-side logic that keeps family conversations secure and private.
 
 ## What it does ✨
 
@@ -169,13 +169,13 @@ Authorization: Bearer <jwt-token>
 - Triggers real-time Pusher event
 
 **DELETE /v1/chat_messages/:messageId**
-- Soft delete a message (user's own messages only)
+- Soft delete a message (users own messages only)
 - Message marked as deleted but not permanently removed
 
 ### Users 👥
 
 **GET /v1/users/profile**
-- Get current user's profile info
+- Get current users profile info
 - Display name, status message, avatar URL
 
 **PUT /v1/users/profile**
